@@ -505,7 +505,6 @@
         <button id="reset-btn">Yeni Oyun</button>
     </div>
     <!-- Ses efektleri -->
-    <audio id="background-music" src="background.mp3" loop></audio>
     <audio id="explosion-sound" src="explosion.mp3" preload="auto"></audio>
     <audio id="click-sound" src="click.mp3" preload="auto"></audio>
     <audio id="flag-sound" src="flag.mp3" preload="auto"></audio>
@@ -786,29 +785,22 @@
         });
 
         // Müzik kontrolü için yeni fonksiyonlar
-        let isMusicPlaying = true;
-        const backgroundMusic = document.getElementById('background-music');
+        let isMusicPlaying = false;
         const musicBtn = document.getElementById('music-btn');
         
         function toggleMusic() {
             if (isMusicPlaying) {
-                backgroundMusic.pause();
                 isMusicPlaying = false;
                 musicBtn.textContent = "Müzik";
             } else {
-                backgroundMusic.play();
                 isMusicPlaying = true;
                 musicBtn.textContent = "Müzik";
             }
         }
 
-        // Sayfa yüklendiğinde müziği başlat
+        // Sayfa yüklendiğinde müzik butonunu gizle
         window.addEventListener('load', () => {
-            backgroundMusic.play().catch(error => {
-                console.log("Müzik otomatik başlatılamadı:", error);
-                isMusicPlaying = false;
-                musicBtn.textContent = "Müzik";
-            });
+            document.getElementById('music-btn').style.display = 'none';
         });
 
         document.addEventListener('DOMContentLoaded', function() {
