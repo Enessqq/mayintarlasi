@@ -21,7 +21,7 @@ Modern ve kullanıcı dostu bir Mayın Tarlası oyunu uygulaması.
 
 1. Projeyi klonlayın:
 ```bash
-git clone https://github.com/[kullanıcı-adınız]/mayin-tarlasi.git
+git clone https://github.com/Enessqq/mayintarlasi.git
 ```
 
 2. `index.html` dosyasını bir web tarayıcısında açın.
@@ -43,4 +43,4 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 
 ## İletişim
 
-GitHub: [@kullanıcı-adınız](https://github.com/[kullanıcı-adınız]) 
+GitHub: [@Enessqq](https://github.com/Enessqq) 
