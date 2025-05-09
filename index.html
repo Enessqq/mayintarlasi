@@ -496,7 +496,6 @@
             <button id="close-help">Kapat</button>
         </div>
     </div>
-    <button id="music-btn" onclick="toggleMusic()" style="position: fixed; top: 24px; right: 24px; z-index: 2002;">Müzik</button>
     <button id="back-to-menu" style="display:none;">⟵ Ana Menü</button>
     <div id="game-container" style="display:none;">
         <div id="status">Oyun Başladı!</div>
@@ -784,25 +783,6 @@
             updateFlagsRemaining(game);
         });
 
-        // Müzik kontrolü için yeni fonksiyonlar
-        let isMusicPlaying = false;
-        const musicBtn = document.getElementById('music-btn');
-        
-        function toggleMusic() {
-            if (isMusicPlaying) {
-                isMusicPlaying = false;
-                musicBtn.textContent = "Müzik";
-            } else {
-                isMusicPlaying = true;
-                musicBtn.textContent = "Müzik";
-            }
-        }
-
-        // Sayfa yüklendiğinde müzik butonunu gizle
-        window.addEventListener('load', () => {
-            document.getElementById('music-btn').style.display = 'none';
-        });
-
         document.addEventListener('DOMContentLoaded', function() {
             // Referanslar
             const themeBtn = document.getElementById('theme-btn');
@@ -836,8 +816,6 @@
 
             // Giriş ekranından oyuna geçiş
             startBtn.addEventListener('click', function() {
-                // Müzik butonunu gizle
-                document.getElementById('music-btn').style.display = 'none';
                 introScreen.style.opacity = '0';
                 setTimeout(() => {
                     introScreen.style.display = 'none';
@@ -860,8 +838,6 @@
                 backToMenuBtn.style.display = 'none';
                 introScreen.style.display = 'flex';
                 introScreen.style.opacity = '1';
-                // Müzik butonunu tekrar göster
-                document.getElementById('music-btn').style.display = 'block';
             });
         });
 
