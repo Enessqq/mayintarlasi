@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mayın Tarlası Oyunu</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: #1e293b;
+        }
+        #game-container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 18px 30px 30px 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+        h1 {
+            color: #0284c7;
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            gap: 2px;
+            margin: 25px auto;
+            background: #e2e8f0;
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: #e2e8f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 18px;
+            border: 1px solid #94a3b8;
+            transition: all 0.2s ease;
+            user-select: none;
+            color: #1e293b;
+        }
+        .cell:hover {
+            background: #f1f5f9;
+        }
+        .cell:active {
+            background: #cbd5e1;
+        }
+        .cell.revealed {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+        }
+        .cell.mine {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+        }
+        .cell.wrong-flag {
+            background: #fecaca !important;
+            border: 1px solid #ef4444 !important;
+            color: #dc2626 !important;
+        }
+        #status {
+            font-size: 1.2em;
+            margin: 15px 0;
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            color: #0284c7;
+            font-weight: 500;
+        }
+        #reset-btn, #music-btn {
+            background: #ffffff;
+            border: 2px solid #0284c7;
+            color: #0284c7;
+            padding: 12px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 15px;
+            margin: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        #reset-btn:before, #music-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: #0284c7;
+            transition: all 0.3s ease;
+            z-index: -1;
+        }
+        #reset-btn:hover, #music-btn:hover {
+            color: #ffffff;
+            box-shadow: 0 5px 15px rgba(2, 132, 199, 0.3);
+        }
+        #reset-btn:hover:before, #music-btn:hover:before {
+            width: 100%;
+        }
+        #reset-btn:active, #music-btn:active {
+            box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3);
+        }
+        #music-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+        /* Sayı renkleri - Tehlike seviyesine göre artan koyu tonlar */
+        .number-1 { color: #1d4ed8 !important; font-weight: 500; } /* Açık mavi - en az tehlike */
+        .number-2 { color: #15803d !important; font-weight: 600; } /* Koyu yeşil */
+        .number-3 { color: #b91c1c !important; font-weight: 600; } /* Koyu kırmızı */
+        .number-4 { color: #1e1b4b !important; font-weight: 700; } /* Çok koyu mavi */
+        .number-5 { color: #713f12 !important; font-weight: 700; } /* Koyu kahverengi */
+        .number-6 { color: #164e63 !important; font-weight: 800; } /* Çok koyu camgöbeği */
+        .number-7 { color: #4c0519 !important; font-weight: 800; } /* Çok koyu bordo */
+        .number-8 { color: #18181b !important; font-weight: 900; } /* Neredeyse siyah - en çok tehlike */
+        /* Karanlık mod için güncellenmiş renkler */
+        body.dark {
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        body.dark #game-container {
+            background: #1e293b;
+            color: #f8fafc;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        body.dark #board {
+            background: #334155;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        body.dark .cell {
+            background: #475569;
+            border: 1px solid #64748b;
+            color: #f8fafc;
+        }
+        body.dark .cell:hover {
+            background: #64748b;
+        }
+        body.dark .cell:active {
+            background: #1e293b;
+        }
+        body.dark .cell.revealed {
+            background: #334155;
+            border: 1px solid #475569;
+        }
+        body.dark .cell.mine {
+            background: #991b1b;
+            border: 1px solid #b91c1c;
+        }
+        body.dark #status {
+            background: #334155;
+            color: #e2e8f0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        body.dark #flags-remaining {
+            color: #e2e8f0;
+        }
+        body.dark #reset-btn, 
+        body.dark #music-btn, 
+        body.dark #theme-btn,
+        body.dark #back-to-menu {
+            background: #334155;
+            color: #e2e8f0;
+            border: 2px solid #475569;
+        }
+        body.dark #reset-btn:hover, 
+        body.dark #music-btn:hover, 
+        body.dark #theme-btn:hover,
+        body.dark #back-to-menu:hover {
+            background: #475569;
+            color: #f8fafc;
+            border-color: #64748b;
+        }
+        body.dark #intro-screen {
+            background: #0f172a;
+        }
+        body.dark .intro-content {
+            background: #1e293b;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        body.dark #intro-screen h1 {
+            color: #e2e8f0;
+        }
+        body.dark #intro-screen p {
+            color: #cbd5e1;
+        }
+        body.dark #start-btn {
+            background: #334155;
+            color: #f8fafc;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        body.dark #start-btn:hover {
+            background: #475569;
+        }
+        body.dark #difficulty {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+        }
+        body.dark #help-modal {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        body.dark .help-content {
+            background: #1e293b;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        body.dark .help-content h2 {
+            color: #e2e8f0;
+        }
+        body.dark .help-content ul {
+            color: #cbd5e1;
+        }
+        body.dark #close-help {
+            background: #334155;
+            color: #f8fafc;
+        }
+        body.dark #close-help:hover {
+            background: #475569;
+        }
+        /* Karanlık modda sayı renkleri - daha yumuşak tonlar */
+        body.dark .number-1 { color: #93c5fd; }
+        body.dark .number-2 { color: #86efac; }
+        body.dark .number-3 { color: #fca5a5; }
+        body.dark .number-4 { color: #c4b5fd; }
+        body.dark .number-5 { color: #fcd34d; }
+        body.dark .number-6 { color: #67e8f9; }
+        body.dark .number-7 { color: #f9a8d4; }
+        body.dark .number-8 { color: #d1d5db; }
+        body.dark .cell.wrong-flag {
+            background: #7f1d1d !important;
+            border: 1px solid #991b1b !important;
+            color: #fecaca !important;
+        }
+        .cell-reveal-anim {
+            animation: cellReveal 0.2s ease-out;
+        }
+        @keyframes cellReveal {
+            0% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+        .win-anim {
+            animation: winFlash 1.2s ease;
+        }
+        @keyframes winFlash {
+            0% { background: #bbf7d0; }
+            50% { background: #4ade80; color: #fff; }
+            100% { background: #c4b5fd; color: #4f46e5; }
+        }
+        .lose-anim {
+            animation: loseFlash 1.2s ease;
+        }
+        @keyframes loseFlash {
+            0% { background: #fecaca; }
+            50% { background: #ef4444; color: #fff; }
+            100% { background: #c4b5fd; color: #4f46e5; }
+        }
+        #back-to-menu {
+            position: fixed;
+            left: 24px;
+            top: 24px;
+            background: #fff;
+            color: #0284c7;
+            border: 2px solid #0284c7;
+            border-radius: 50px;
+            padding: 8px 22px;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            z-index: 2001;
+        }
+        #back-to-menu:hover {
+            background: #0284c7;
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(2, 132, 199, 0.3);
+        }
+        body.dark #back-to-menu {
+            background: #18181b;
+            color: #a5b4fc;
+            border-color: #a5b4fc;
+        }
+        body.dark #back-to-menu:hover {
+            background: #6366f1;
+            color: #fff;
+        }
+        #intro-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(120deg, #0ea5e9 0%, #0284c7 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+        .intro-content {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 48px 36px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(2, 132, 199, 0.15);
+            text-align: center;
+            position: relative;
+        }
+        .copyright-text {
+            position: absolute;
+            bottom: -40px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9em;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .copyright-text a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .copyright-text a:hover {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        body.dark .copyright-text {
+            color: rgba(226, 232, 240, 0.9);
+        }
+        body.dark .copyright-text a {
+            color: #e2e8f0;
+        }
+        #intro-screen h1 {
+            color: #0284c7;
+            font-size: 2.5em;
+            margin-bottom: 18px;
+        }
+        #intro-screen p {
+            color: #0369a1;
+            font-size: 1.2em;
+            margin-bottom: 32px;
+        }
+        #start-btn {
+            background: #0284c7;
+            color: #fff;
+            border: none;
+            padding: 16px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(2, 132, 199, 0.2);
+            transition: background 0.3s, transform 0.2s;
+        }
+        #start-btn:hover {
+            background: #0369a1;
+            transform: translateY(-2px) scale(1.04);
+        }
+        #difficulty-select {
+            margin-bottom: 18px;
+        }
+        #difficulty {
+            font-size: 1em;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #0284c7;
+            margin-left: 8px;
+        }
+        #theme-btn {
+            background: #fff;
+            color: #0284c7;
+            border: 2px solid #0284c7;
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        #theme-btn:hover {
+            background: #0284c7;
+            color: #fff;
+        }
+        #help-btn {
+            background: #0284c7;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 28px;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 12px;
+            margin-left: 8px;
+            transition: background 0.3s;
+        }
+        #help-btn:hover {
+            background: #0369a1;
+        }
+        #help-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(2, 132, 199, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .help-content {
+            background: #fff;
+            padding: 36px 28px;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(2, 132, 199, 0.15);
+            text-align: left;
+            min-width: 320px;
+        }
+        .help-content h2 {
+            color: #0284c7;
+            margin-bottom: 16px;
+        }
+        .help-content ul {
+            color: #0369a1;
+            margin-bottom: 18px;
+        }
+        #close-help {
+            background: #0284c7;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 24px;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        #close-help:hover {
+            background: #0369a1;
+        }
+    </style>
+</head>
+<body>
+    <div id="intro-screen">
+        <div class="intro-content">
+            <h1>Mayın Tarlası</h1>
+            <p>Hoş geldiniz! Zekanızı test etmeye hazır mısınız?</p>
+            <div id="difficulty-select">
+                <label>Zorluk:
+                    <select id="difficulty">
+                        <option value="easy">Kolay (8x8, 10 mayın)</option>
+                        <option value="medium" selected>Orta (10x10, 15 mayın)</option>
+                        <option value="hard">Zor (14x14, 30 mayın)</option>
+                    </select>
+                </label>
+            </div>
+            <button id="start-btn">Başla</button>
+            <button id="help-btn" type="button">Yardım / Kurallar</button>
+            <div style="margin-top:18px;">
+                <button id="theme-btn" type="button">🌙 Tema</button>
+            </div>
+            <div class="copyright-text">
+                © 2024 Enes Açık | <a href="https://cursor.sh" target="_blank">Cursor AI</a> yardımıyla geliştirilmiştir
+            </div>
+        </div>
+    </div>
+    <div id="help-modal" style="display:none;">
+        <div class="help-content">
+            <h2>Oyun Kuralları</h2>
+            <ul>
+                <li>Mayınlara basmadan tüm boş hücreleri açmaya çalışın.</li>
+                <li>Bir hücredeki sayı, etrafındaki mayın sayısını gösterir.</li>
+                <li>Sağ tık ile bayrak koyabilir/kaldırabilirsiniz.</li>
+                <li>Bayrak sayınız mayın sayısı ile sınırlıdır.</li>
+                <li>Farklı zorluklar ve temalar arasında geçiş yapabilirsiniz.</li>
+            </ul>
+            <button id="close-help">Kapat</button>
+        </div>
+    </div>
+    <button id="music-btn" onclick="toggleMusic()" style="position: fixed; top: 24px; right: 24px; z-index: 2002;">Müzik</button>
+    <button id="back-to-menu" style="display:none;">⟵ Ana Menü</button>
+    <div id="game-container" style="display:none;">
+        <div id="status">Oyun Başladı!</div>
+        <div id="flags-remaining">Bayrak: 0</div>
+        <div id="board"></div>
+        <button id="reset-btn">Yeni Oyun</button>
+    </div>
+    <!-- Ses efektleri -->
+    <audio id="background-music" src="background.mp3" loop></audio>
+    <audio id="explosion-sound" src="explosion.mp3" preload="auto"></audio>
+    <audio id="click-sound" src="click.mp3" preload="auto"></audio>
+    <audio id="flag-sound" src="flag.mp3" preload="auto"></audio>
+
+    <script>
+        class Minesweeper {
+            constructor(size = 10, mines = 15) {
+                this.size = size;
+                this.mineCount = mines;
+                this.board = [];
+                this.minesLocation = new Set();
+                this.gameOver = false;
+                this.isFirstClick = true;
+                this.initEmptyBoard();
+            }
+
+            initEmptyBoard() {
+                this.minesLocation.clear();
+                this.board = [];
+                // Boş board oluştur
+                for (let r = 0; r < this.size; r++) {
+                    let row = [];
+                    for (let c = 0; c < this.size; c++) {
+                        row.push({
+                            mine: false,
+                            revealed: false,
+                            flagged: false,
+                            adjacentMines: 0
+                        });
+                    }
+                    this.board.push(row);
+                }
+            }
+
+            placeMines(firstClickRow, firstClickCol) {
+                // İlk tıklanan hücre ve etrafındaki hücreleri güvenli bölge olarak işaretle
+                const safeZone = new Set();
+                for (let r = firstClickRow - 1; r <= firstClickRow + 1; r++) {
+                    for (let c = firstClickCol - 1; c <= firstClickCol + 1; c++) {
+                        if (r >= 0 && r < this.size && c >= 0 && c < this.size) {
+                            safeZone.add(r * this.size + c);
+                        }
+                    }
+                }
+
+                // Mayınları yerleştir (güvenli bölge dışına)
+                while (this.minesLocation.size < this.mineCount) {
+                    const randomNum = Math.floor(Math.random() * (this.size * this.size));
+                    if (!safeZone.has(randomNum)) {
+                        this.minesLocation.add(randomNum);
+                    }
+                }
+
+                // Mayınları board'a yerleştir
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        this.board[r][c].mine = this.minesLocation.has(r * this.size + c);
+                    }
+                }
+
+                // Komşu mayınları hesapla
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        this.board[r][c].adjacentMines = this.countAdjacentMines(r, c);
+                    }
+                }
+            }
+
+            revealCell(row, col) {
+                if (this.gameOver || this.board[row][col].revealed || this.board[row][col].flagged) return;
+
+                if (this.isFirstClick) {
+                    this.placeMines(row, col);
+                    this.isFirstClick = false;
+                }
+
+                this.board[row][col].revealed = true;
+                // Hücre açılınca ses
+                document.getElementById('click-sound').currentTime = 0;
+                document.getElementById('click-sound').play();
+                // Animasyon ekle
+                animateCellReveal(row, col);
+
+                if (this.board[row][col].mine) {
+                    this.gameOver = true;
+                    document.getElementById('status').textContent = 'Mayına Bastınız! Oyun Bitti.';
+                    // Patlama sesi
+                    document.getElementById('explosion-sound').currentTime = 0;
+                    document.getElementById('explosion-sound').play();
+                    this.revealAllMines();
+                    showEndAnimation(false);
+                    return;
+                }
+
+                if (this.board[row][col].adjacentMines === 0) {
+                    // Boş hücreleri otomatik aç
+                    for (let r = row - 1; r <= row + 1; r++) {
+                        for (let c = col - 1; c <= col + 1; c++) {
+                            if (r >= 0 && r < this.size && c >= 0 && c < this.size) {
+                                if (!this.board[r][c].revealed) {
+                                    this.revealCell(r, c);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                this.checkWin();
+            }
+
+            revealAllMines() {
+                let correctFlags = 0;
+                let wrongFlags = 0;
+
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        const cell = this.board[r][c];
+                        const cellElement = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                        
+                        if (cell.mine) {
+                            cell.revealed = true;
+                            if (cell.flagged) {
+                                correctFlags++;
+                                cellElement.textContent = '🚩';
+                            } else {
+                                cellElement.textContent = '💣';
+                                cellElement.classList.add('mine');
+                            }
+                        } else if (cell.flagged) {
+                            wrongFlags++;
+                            cell.revealed = true;
+                            cellElement.textContent = '❌';
+                            cellElement.classList.add('wrong-flag');
+                        }
+                    }
+                }
+
+                const statusElement = document.getElementById('status');
+                if (!this.checkWin()) {
+                    statusElement.textContent = `Oyun Bitti! Doğru Bayraklar: ${correctFlags}, Yanlış Bayraklar: ${wrongFlags}`;
+                }
+            }
+
+            checkWin() {
+                let revealedCount = 0;
+                let correctFlags = 0;
+
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        const cell = this.board[r][c];
+                        if (cell.revealed && !cell.mine) {
+                            revealedCount++;
+                        }
+                        if (cell.flagged && cell.mine) {
+                            correctFlags++;
+                        }
+                    }
+                }
+
+                if (revealedCount === this.size * this.size - this.mineCount || correctFlags === this.mineCount) {
+                    this.gameOver = true;
+                    document.getElementById('status').textContent = 'Tebrikler! Oyunu Kazandınız!';
+                    showEndAnimation(true);
+                    return true;
+                }
+                return false;
+            }
+
+            toggleFlag(row, col) {
+                if (this.gameOver || this.board[row][col].revealed) return;
+                // Bayrak limiti kontrolü
+                if (!this.board[row][col].flagged && this.getFlagCount() >= this.mineCount) return;
+                this.board[row][col].flagged = !this.board[row][col].flagged;
+                // Bayrak sesi
+                document.getElementById('flag-sound').currentTime = 0;
+                document.getElementById('flag-sound').play();
+                updateFlagsRemaining(this);
+            }
+
+            getFlagCount() {
+                let count = 0;
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        if (this.board[r][c].flagged) count++;
+                    }
+                }
+                return count;
+            }
+
+            countAdjacentMines(row, col) {
+                let count = 0;
+                for (let r = row - 1; r <= row + 1; r++) {
+                    for (let c = col - 1; c <= col + 1; c++) {
+                        if (r >= 0 && r < this.size && c >= 0 && c < this.size) {
+                            if (this.board[r][c].mine) count++;
+                        }
+                    }
+                }
+                return count;
+            }
+        }
+
+        function createBoard(game) {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+            boardElement.style.gridTemplateColumns = `repeat(${game.size}, 40px)`;
+
+            for (let r = 0; r < game.size; r++) {
+                for (let c = 0; c < game.size; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    cell.addEventListener('click', () => {
+                        game.revealCell(r, c);
+                        updateBoard(game);
+                        updateFlagsRemaining(game);
+                    });
+                    // Sağ tık ile bayrak koyma/kaldırma
+                    cell.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        game.toggleFlag(r, c);
+                        updateBoard(game);
+                        updateFlagsRemaining(game);
+                    });
+
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+
+        function updateBoard(game) {
+            for (let r = 0; r < game.size; r++) {
+                for (let c = 0; c < game.size; c++) {
+                    const cell = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+                    const cellData = game.board[r][c];
+
+                    // Önceki sınıfları temizle
+                    cell.className = 'cell';
+                    for (let i = 1; i <= 8; i++) {
+                        cell.classList.remove(`number-${i}`);
+                    }
+                    cell.classList.remove('wrong-flag', 'mine');
+
+                    if (cellData.flagged && !game.gameOver) {
+                        cell.textContent = '🚩';
+                        continue;
+                    }
+
+                    if (cellData.revealed) {
+                        cell.classList.add('revealed');
+                        if (cellData.mine) {
+                            cell.textContent = '💣';
+                            cell.classList.add('mine');
+                        } else if (cellData.adjacentMines > 0) {
+                            cell.textContent = cellData.adjacentMines;
+                            cell.classList.add(`number-${cellData.adjacentMines}`);
+                        } else {
+                            cell.textContent = '';
+                        }
+                    } else if (!game.gameOver) {
+                        cell.textContent = '';
+                    }
+                }
+            }
+        }
+
+        let game = new Minesweeper();
+        createBoard(game);
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            let size = game.size, mines = game.mineCount;
+            game = new Minesweeper(size, mines);
+            createBoard(game);
+            document.getElementById('status').textContent = 'Yeni Oyun Başladı!';
+            updateFlagsRemaining(game);
+        });
+
+        // Müzik kontrolü için yeni fonksiyonlar
+        let isMusicPlaying = true;
+        const backgroundMusic = document.getElementById('background-music');
+        const musicBtn = document.getElementById('music-btn');
+        
+        function toggleMusic() {
+            if (isMusicPlaying) {
+                backgroundMusic.pause();
+                isMusicPlaying = false;
+                musicBtn.textContent = "Müzik";
+            } else {
+                backgroundMusic.play();
+                isMusicPlaying = true;
+                musicBtn.textContent = "Müzik";
+            }
+        }
+
+        // Sayfa yüklendiğinde müziği başlat
+        window.addEventListener('load', () => {
+            backgroundMusic.play().catch(error => {
+                console.log("Müzik otomatik başlatılamadı:", error);
+                isMusicPlaying = false;
+                musicBtn.textContent = "Müzik";
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Referanslar
+            const themeBtn = document.getElementById('theme-btn');
+            const helpBtn = document.getElementById('help-btn');
+            const helpModal = document.getElementById('help-modal');
+            const closeHelp = document.getElementById('close-help');
+            const introScreen = document.getElementById('intro-screen');
+            const gameContainer = document.getElementById('game-container');
+            const startBtn = document.getElementById('start-btn');
+            const difficulty = document.getElementById('difficulty');
+            const backToMenuBtn = document.getElementById('back-to-menu');
+
+            // Tema geçişi
+            themeBtn.addEventListener('click', function() {
+                document.body.classList.toggle('dark');
+            });
+
+            // Yardım modalı
+            helpBtn.addEventListener('click', function() {
+                helpModal.style.display = 'flex';
+            });
+            closeHelp.addEventListener('click', function() {
+                helpModal.style.display = 'none';
+            });
+
+            // Oyun ekranı açıldığında butonu göster
+            function showGameContainer() {
+                gameContainer.style.display = 'block';
+                backToMenuBtn.style.display = 'block';
+            }
+
+            // Giriş ekranından oyuna geçiş
+            startBtn.addEventListener('click', function() {
+                // Müzik butonunu gizle
+                document.getElementById('music-btn').style.display = 'none';
+                introScreen.style.opacity = '0';
+                setTimeout(() => {
+                    introScreen.style.display = 'none';
+                    showGameContainer();
+                    // Zorluk ayarını uygula
+                    let size = 10, mines = 15;
+                    if (difficulty.value === 'easy') { size = 8; mines = 10; }
+                    if (difficulty.value === 'medium') { size = 10; mines = 15; }
+                    if (difficulty.value === 'hard') { size = 14; mines = 30; }
+                    game = new Minesweeper(size, mines);
+                    createBoard(game);
+                    document.getElementById('status').textContent = 'Yeni Oyun Başladı!';
+                    updateFlagsRemaining(game);
+                }, 500);
+            });
+
+            // Ana Menü'ye Dön butonu
+            backToMenuBtn.addEventListener('click', function() {
+                gameContainer.style.display = 'none';
+                backToMenuBtn.style.display = 'none';
+                introScreen.style.display = 'flex';
+                introScreen.style.opacity = '1';
+                // Müzik butonunu tekrar göster
+                document.getElementById('music-btn').style.display = 'block';
+            });
+        });
+
+        // Bayrak limiti ve kalan bayrak sayısı
+        function updateFlagsRemaining(game) {
+            const flagsElem = document.getElementById('flags-remaining');
+            const usedFlags = game.getFlagCount();
+            flagsElem.textContent = `Bayrak: ${game.mineCount - usedFlags}`;
+        }
+
+        // Animasyon fonksiyonları
+        function animateCellReveal(row, col) {
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            if (cell) {
+                cell.classList.add('cell-reveal-anim');
+                setTimeout(() => cell.classList.remove('cell-reveal-anim'), 350);
+            }
+        }
+        function showEndAnimation(isWin) {
+            const status = document.getElementById('status');
+            status.classList.add(isWin ? 'win-anim' : 'lose-anim');
+            setTimeout(() => status.classList.remove(isWin ? 'win-anim' : 'lose-anim'), 1200);
+        }
+    </script>
+</body>
+</html>

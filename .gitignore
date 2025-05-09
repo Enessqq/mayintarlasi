@@ -1,0 +1,21 @@
+# Sistem dosyaları
+.DS_Store
+Thumbs.db
+
+# IDE ve editör dosyaları
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Log dosyaları
+*.log
+
+# Geçici dosyalar
+*.tmp
+*.temp
+
+# Ses dosyaları (eğer bunları ayrı bir depoda tutmak istiyorsanız)
+*.mp3
+*.wav
+*.ogg 
